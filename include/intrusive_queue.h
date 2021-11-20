@@ -31,7 +31,7 @@ struct intrusive_queue {
   }
 
   template <typename F, typename... Args>
-  void iterate(F&& f, Args... args) {
+  void iterate(F&& f, Args&&... args) {
     QUEUE* p = nullptr;
     QUEUE_FOREACH(p, &head) {
       if (!f(p, args...))
@@ -40,7 +40,7 @@ struct intrusive_queue {
   }
 
   template <typename F, typename... Args>
-  void iterate_r(F&& f, Args... args) {
+  void iterate_r(F&& f, Args&&... args) {
     QUEUE* p = nullptr;
     QUEUE_FOREACH_R(p, &head) {
       if (!f(p, args...))

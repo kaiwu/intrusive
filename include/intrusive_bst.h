@@ -118,7 +118,7 @@ struct intrusive_bst {
   }
 
   template <typename F, typename... Args>
-  void iterate_preorder(F&& f, TREE* last, Args... args) const noexcept {
+  void iterate_preorder(F&& f, TREE* last, Args&&... args) const noexcept {
     f(last, args...);
     if (!LEFT_EMPTY(last))
       iterate_preorder(f, TREE_LEFT(last), args...);
@@ -127,7 +127,7 @@ struct intrusive_bst {
   }
 
   template <typename F, typename... Args>
-  void iterate_inorder(F&& f, TREE* last, Args... args) const noexcept {
+  void iterate_inorder(F&& f, TREE* last, Args&&... args) const noexcept {
     if (!LEFT_EMPTY(last))
       iterate_inorder(f, TREE_LEFT(last), args...);
     f(last, args...);
@@ -136,7 +136,7 @@ struct intrusive_bst {
   }
 
   template <typename F, typename... Args>
-  void iterate_postorder(F&& f, TREE* last, Args... args) const noexcept {
+  void iterate_postorder(F&& f, TREE* last, Args&&... args) const noexcept {
     if (!LEFT_EMPTY(last))
       iterate_postorder(f, TREE_LEFT(last), args...);
     if (!RIGHT_EMPTY(last))
@@ -145,7 +145,7 @@ struct intrusive_bst {
   }
 
   template <typename F, typename... Args>
-  void iterate_bfs(F&& f, TREE* last, Args... args) const noexcept {
+  void iterate_bfs(F&& f, TREE* last, Args&&... args) const noexcept {
     std::deque<TREE*> ts;
     ts.push_back(last);
     while (!ts.empty()) {
@@ -160,7 +160,7 @@ struct intrusive_bst {
   }
 
   template <typename F, typename... Args>
-  void iterate(tree_traverse_t traverse, F&& f, Args... args) const noexcept {
+  void iterate(tree_traverse_t traverse, F&& f, Args&&... args) const noexcept {
     if (!empty()) {
       switch (traverse) {
         case TREE_TRAVERSE_PREORDER:
