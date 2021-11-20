@@ -83,7 +83,7 @@ TEST_CASE("intrusive queue", "[]") {
 
   Q qs2[] = {{4}, {5}, {6}, {7}};
   intrusive_queue q2;
-  for (auto& q : qs2) {
+  for (auto& q : qs2) { // auto& intrusive !!!
     q2.enqueue_back(&q.link);
   }
   q1.append(q2); // q2 cannot be used
@@ -128,6 +128,67 @@ struct T {
 
 #define GETT(x) TREE_DATA(x, T, node)
 
+bool compareT(TREE* t1, TREE* t2) {
+  return GETT(t1)->v < GETT(t2)->v;
+}
+
 TEST_CASE("intrusive bst", "[]") {
-  REQUIRE(1 == 1);
+  T ts[] = {{4}, {2}, {1}, {3}, {0}, {5}};
+  intrusive_bst bst;
+  REQUIRE(bst.empty());
+
+  for (auto& t : ts) {
+    bst.insert(&t.node, compareT);
+  }
+  REQUIRE(!bst.empty());
+  REQUIRE(bst.size() == 6);
+
+  auto collect = [](TREE* t, std::vector<int32_t>& v) {
+    v.push_back(GETT(t)->v);
+    return true;
+  };
+
+  std::vector<int32_t> preorder;
+  bst.iterate(TREE_TRAVERSE_PREORDER, collect, std::ref(preorder));
+  REQUIRE(equal(preorder, {4, 2, 1, 0, 3, 5}));
+
+  std::vector<int32_t> inorder;
+  bst.iterate(TREE_TRAVERSE_INORDER, collect, std::ref(inorder));
+  REQUIRE(equal(inorder, {0, 1, 2, 3, 4, 5}));
+
+  std::vector<int32_t> postorder;
+  bst.iterate(TREE_TRAVERSE_POSTORDER, collect, std::ref(postorder));
+  REQUIRE(equal(postorder, {0, 1, 3, 2, 5, 4}));
+
+  std::vector<int32_t> bfs;
+  bst.iterate(TREE_TRAVERSE_BFS, collect, std::ref(bfs));
+  REQUIRE(equal(bfs, {4, 2, 5, 1, 3, 0}));
+
+  TREE* min = bst.min(bst.root);
+  REQUIRE(GETT(min)->v == 0);
+
+  TREE* max = bst.max(bst.root);
+  REQUIRE(GETT(max)->v == 5);
+
+  REQUIRE(bst.height() == 4);
+  REQUIRE(bst.height(min) == 1);
+  REQUIRE(bst.height(max) == 1);
+
+  T t1{1}, t30{30};
+  bst.erase(&t1.node, compareT);
+  REQUIRE(bst.height() == 3);
+  REQUIRE(bst.size() == 5);
+  inorder.clear();
+  bst.iterate(TREE_TRAVERSE_INORDER, collect, std::ref(inorder));
+  REQUIRE(equal(inorder, {0, 2, 3, 4, 5}));
+
+  bfs.clear();
+  bst.iterate(TREE_TRAVERSE_BFS, collect, std::ref(bfs));
+  REQUIRE(equal(bfs, {4, 2, 5, 0, 3}));
+
+  bst.erase(&t30.node, compareT);
+  REQUIRE(bst.size() == 5);
+
+  bst.clear();
+  REQUIRE(bst.empty());
 }
