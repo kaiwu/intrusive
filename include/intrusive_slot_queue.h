@@ -11,20 +11,22 @@ struct link {
   link() : next(npos), prev(npos) {}
 };
 
-// Alloc::address(npos) -> nullptr
+// alloc->address(npos) -> nullptr
 template <typename T, typename Alloc>
 struct intrusive_slot_queue {
 private:
   link head;
+  Alloc* alloc;
 
 public:
+  intrusive_slot_queue(Alloc* a): alloc(a) {}
 
   bool empty() const noexcept {
     return head.next == npos && head.prev == npos;
   }
 
   T* front() const noexcept {
-    return empty() ? nullptr : Alloc::address(head.next);
+    return empty() ? nullptr : alloc->address(head.next);
   }
 
   void enqueue_back(T* t) {
@@ -35,7 +37,7 @@ public:
         t->link.prev = npos;
     }
     else {
-        T* last = Alloc::address(head.prev);
+        T* last = alloc->address(head.prev);
         last->link.next = t->slot;
         t->link.prev = last->slot;
         t->link.next = npos;
@@ -51,7 +53,7 @@ public:
         t->link.prev = npos;
     }
     else {
-        T* first = Alloc::address(head.next);
+        T* first = alloc->address(head.next);
         first->link.prev = t->slot;
         t->link.next = first->slot;
         t->link.prev = npos;
@@ -60,8 +62,8 @@ public:
   }
 
   void dequeue(T* t) {
-    T* p = Alloc::address(t->link.prev);
-    T* n = Alloc::address(t->link.next);
+    T* p = alloc->address(t->link.prev);
+    T* n = alloc->address(t->link.next);
 
     if (p == nullptr && n == nullptr) { // t is both head and tail
       head.next = npos; 
@@ -84,23 +86,23 @@ public:
 
   template <typename F, typename... Args>
   void iterate(F&& f, Args&&... args) const noexcept {
-    T* n = Alloc::address(head.next);
+    T* n = alloc->address(head.next);
     while (n != nullptr) {
       if(!f(n, args...)) {
         break;
       }
-      n = Alloc::address(n->link.next);
+      n = alloc->address(n->link.next);
     }
   }
 
   template <typename F, typename... Args>
   void iterate_r(F&& f, Args&&... args) const noexcept{
-    T* p = Alloc::address(head.prev);
+    T* p = alloc->address(head.prev);
     while (p != nullptr) {
       if(!f(p, args...)) {
         break;
       }
-      p = Alloc::address(p->link.prev);
+      p = alloc->address(p->link.prev);
     }
   }
 
@@ -135,5 +137,41 @@ public:
       return p == nullptr;
     });
     return p;
+  }
+
+  template <typename F>
+  T* insert_before(T* p, F&& f) {
+    T* x = find(f);
+    if (x != nullptr) {
+      T* prev = alloc->address(x->link.prev);
+      if (prev == nullptr) {
+        enqueue_front(p);
+      }
+      else {
+        prev->link.next = p->slot;
+        p->link.prev = prev->slot;
+        p->link.next = x->slot;
+        x->link.prev = p->slot;
+      }
+    }
+    return x;
+  }
+
+  template <typename F>
+  T* insert_after(T* p, F&& f) {
+    T* x = find(f);
+    if (x != nullptr) {
+      T* next = alloc->address(x->link.next);
+      if (next == nullptr) {
+        enqueue_back(p);
+      }
+      else {
+        next->link.prev = p->slot;
+        p->link.next = next->slot;
+        p->link.prev = x->slot;
+        x->link.next = p->slot;
+      }
+    }
+    return x;
   }
 };

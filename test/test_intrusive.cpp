@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "intrusive_bst.h"
 #include "intrusive_queue.h"
+#include "intrusive_slot_queue.h"
 #include <cstdio>
 #include <vector>
 
@@ -191,4 +192,81 @@ TEST_CASE("intrusive bst", "[]") {
 
   bst.clear();
   REQUIRE(bst.empty());
+}
+
+struct SQ {
+  uint32_t v;
+  uint32_t slot;
+  struct link link;
+};
+
+struct SQ_Alloc {
+  std::vector<SQ> sqs;
+  SQ_Alloc(size_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+      sqs.push_back(SQ{i, i, link()});
+    }
+  }
+
+  SQ* address(uint32_t slot) {
+    if (slot < sqs.size()) {
+      return &sqs[slot];
+    }
+    return nullptr;
+  }
+};
+
+
+TEST_CASE("intrusive slot queue", "[]") {
+  SQ_Alloc alloc(10);
+  intrusive_slot_queue<SQ, SQ_Alloc> q(&alloc);
+  q.enqueue_back(alloc.address(1));
+  q.enqueue_back(alloc.address(2));
+  q.enqueue_back(alloc.address(3));
+  q.enqueue_front(alloc.address(0));
+
+  REQUIRE(!q.empty());
+  REQUIRE(q.size() == 4);
+  REQUIRE(q.front()->v == 0);
+
+  auto collect = [](SQ* q, std::vector<int32_t>& v) {
+    v.push_back(q->v);
+    return true;
+  };
+  std::vector<int32_t> v1;
+  q.iterate(collect, std::ref(v1));
+  REQUIRE(equal(v1, {0, 1, 2, 3}));
+
+  std::vector<int32_t> v2;
+  q.iterate_r(collect, std::ref(v2));
+  REQUIRE(equal(v2, {3, 2, 1, 0}));
+
+  auto find1 = [](SQ* q) { return q->v == 1; };
+  SQ* p = q.find(find1);
+  REQUIRE(p->v == 1);
+  REQUIRE(p == alloc.address(1));
+  q.dequeue(p);
+  REQUIRE(q.size() == 3);
+  p = q.find_r(find1);
+  REQUIRE(p == nullptr);
+
+  std::vector<int32_t> v3;
+  q.iterate(collect, std::ref(v3));
+  REQUIRE(equal(v3, {0, 2, 3}));
+
+  auto find2 = [](SQ* q) { return q->v == 2; };
+  q.insert_before(alloc.address(1), find2);
+  REQUIRE(q.size() == 4);
+  std::vector<int32_t> v4;
+  q.iterate(collect, std::ref(v4));
+  REQUIRE(equal(v4, {0, 1, 2, 3}));
+  p = q.find_r(find1);
+  REQUIRE(p == alloc.address(1));
+
+  auto find10 = [](SQ* q) { return q->v == 10; };
+  p = q.insert_after(alloc.address(9), find10);
+  REQUIRE(p == nullptr);
+  std::vector<int32_t> v5;
+  q.iterate(collect, std::ref(v5));
+  REQUIRE(equal(v5, {0, 1, 2, 3}));
 }
