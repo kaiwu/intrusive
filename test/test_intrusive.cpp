@@ -269,4 +269,13 @@ TEST_CASE("intrusive slot queue", "[]") {
   std::vector<int32_t> v5;
   q.iterate(collect, std::ref(v5));
   REQUIRE(equal(v5, {0, 1, 2, 3}));
+
+  std::vector<int32_t> v6;
+  while (!q.empty()) {
+    SQ* x = q.front();
+    v6.push_back(x->v);
+    q.dequeue(x);
+  }
+  REQUIRE(q.size() == 0);
+  REQUIRE(equal(v6, {0, 1, 2, 3}));
 }
