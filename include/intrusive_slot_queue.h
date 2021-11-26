@@ -8,7 +8,7 @@ typedef uint32_t SLOT_QUEUE[3];
 template <typename T> T *address(uint32_t slot);
 template <typename T> SLOT_QUEUE *address(T *);
 
-#define ADDRESS(s) (address<T>(address<T>(s)))
+#define ADDRESS(T, s) (address<T>(address<T>(s)))
 #define SLOT_QUEUE_DATA(ptr, type, field)                                      \
   ((type *)((char *)(ptr)-offsetof(type, field)))
 
@@ -30,10 +30,9 @@ struct intrusive_slot_queue {
 private:
   SLOT_QUEUE head;
 
-  void enqueue_after(T *t, SLOT_QUEUE* xq) {
-    SLOT_QUEUE *tq = address<T>(t);
+  void enqueue_after(SLOT_QUEUE *tq, SLOT_QUEUE* xq) {
     uint32_t n = SLOT_QUEUE_NEXT(xq);
-    SLOT_QUEUE *nq = (n == npos ? &head : ADDRESS(n));
+    SLOT_QUEUE *nq = (n == npos ? &head : ADDRESS(T, n));
 
     SLOT_QUEUE_NEXT(xq) = SLOT_QUEUE_SLOT(tq);
     SLOT_QUEUE_PREV(tq) = SLOT_QUEUE_SLOT(xq);
@@ -41,10 +40,9 @@ private:
     SLOT_QUEUE_PREV(nq) = SLOT_QUEUE_SLOT(tq);
   }
 
-  void enqueue_before(T *t, SLOT_QUEUE* xq) {
-    SLOT_QUEUE *tq = address<T>(t);
+  void enqueue_before(SLOT_QUEUE *tq, SLOT_QUEUE* xq) {
     uint32_t p = SLOT_QUEUE_PREV(xq);
-    SLOT_QUEUE *pq = (p == npos ? &head : ADDRESS(p));
+    SLOT_QUEUE *pq = (p == npos ? &head : ADDRESS(T, p));
 
     SLOT_QUEUE_PREV(xq) = SLOT_QUEUE_SLOT(tq);
     SLOT_QUEUE_NEXT(tq) = SLOT_QUEUE_SLOT(xq);
@@ -59,13 +57,12 @@ public:
   T *front() const noexcept { return address<T>(SLOT_QUEUE_NEXT(&head)); }
 
   void enqueue_front(T *t) {
-    enqueue_after(t, &head);
+    enqueue_after(address<T>(t), &head);
   }
 
   void enqueue_back(T *t) {
-    enqueue_before(t, &head);
+    enqueue_before(address<T>(t), &head);
   }
-
 
   void dequeue(T *t) {
     SLOT_QUEUE *s = address<T>(t);
@@ -80,22 +77,22 @@ public:
       }
 
       if (n != npos && p == npos) { // t is head
-        SLOT_QUEUE* nq = ADDRESS(n);
+        SLOT_QUEUE* nq = ADDRESS(T, n);
         SLOT_QUEUE_NEXT(&head) = SLOT_QUEUE_SLOT(nq);
         SLOT_QUEUE_PREV(nq) = SLOT_QUEUE_SLOT(&head);
         break;
       }
 
       if (n == npos && p != npos) { // t is tail
-        SLOT_QUEUE* pq = ADDRESS(p);
+        SLOT_QUEUE* pq = ADDRESS(T, p);
         SLOT_QUEUE_NEXT(pq) = SLOT_QUEUE_SLOT(&head);
         SLOT_QUEUE_PREV(&head) = SLOT_QUEUE_SLOT(pq);
         break;
       }
 
       if (n != npos && p != npos) { // t is middle
-        SLOT_QUEUE* nq = ADDRESS(n);
-        SLOT_QUEUE* pq = ADDRESS(p);
+        SLOT_QUEUE* nq = ADDRESS(T, n);
+        SLOT_QUEUE* pq = ADDRESS(T, p);
         SLOT_QUEUE_NEXT(pq) = SLOT_QUEUE_SLOT(nq);
         SLOT_QUEUE_PREV(nq) = SLOT_QUEUE_SLOT(pq);
         break;
@@ -106,23 +103,23 @@ public:
 
   template <typename F, typename... Args>
   void iterate(F &&f, Args &&...args) const noexcept {
-    SLOT_QUEUE* n = ADDRESS(SLOT_QUEUE_NEXT(&head));
+    SLOT_QUEUE* n = ADDRESS(T, SLOT_QUEUE_NEXT(&head));
     while (SLOT_QUEUE_SLOT(n) != SLOT_QUEUE_SLOT(&head)) {
       if (!f(address<T>(SLOT_QUEUE_SLOT(n)), args...)) {
         break;
       }
-      n = ADDRESS(SLOT_QUEUE_NEXT(n));
+      n = ADDRESS(T, SLOT_QUEUE_NEXT(n));
     }
   }
 
   template <typename F, typename... Args>
   void iterate_r(F &&f, Args &&...args) const noexcept {
-    SLOT_QUEUE* p = ADDRESS(SLOT_QUEUE_PREV(&head));
+    SLOT_QUEUE* p = ADDRESS(T, SLOT_QUEUE_PREV(&head));
     while (SLOT_QUEUE_SLOT(p) != SLOT_QUEUE_SLOT(&head)) {
       if (!f(address<T>(SLOT_QUEUE_SLOT(p)), args...)) {
         break;
       }
-      p = ADDRESS(SLOT_QUEUE_PREV(p));
+      p = ADDRESS(T, SLOT_QUEUE_PREV(p));
     }
   }
 
@@ -160,7 +157,7 @@ public:
   template <typename F> SLOT_QUEUE *insert_before(T *t, F &&f) {
     T *x = find(f);
     if (x != nullptr) {
-      enqueue_before(t, address<T>(x));
+      enqueue_before(address<T>(t), address<T>(x));
     }
     return x;
   }
@@ -168,7 +165,7 @@ public:
   template <typename F> SLOT_QUEUE *insert_after(T *t, F &&f) {
     T *x = find(f);
     if (x != nullptr) {
-      enqueue_after(t, address<T>(x));
+      enqueue_after(address<T>(t), address<T>(x));
     }
     return x;
   }
