@@ -205,7 +205,7 @@ struct SQ {
 
 template<>
 SLOT_QUEUE* address<SQ>(SQ* sq) {
-  return &(sq->q);
+  return sq == nullptr ? nullptr : &(sq->q);
 }
 
 template<>
@@ -241,11 +241,10 @@ TEST_CASE("intrusive slot queue", "[]") {
   q.iterate_r(collect, std::ref(v2));
   REQUIRE(equal(v2, {3, 2, 1, 0}));
 
-  /*
   auto find1 = [](SQ* q) { return q->v == 1; };
   SQ* p = q.find(find1);
   REQUIRE(p->v == 1);
-  REQUIRE(p == alloc.address(1));
+  REQUIRE(p == address<SQ>(1u));
   q.dequeue(p);
   REQUIRE(q.size() == 3);
   p = q.find_r(find1);
@@ -255,21 +254,21 @@ TEST_CASE("intrusive slot queue", "[]") {
   q.iterate(collect, std::ref(v3));
   REQUIRE(equal(v3, {0, 2, 3}));
 
-  auto find2 = [](SQ* q) { return q->v == 2; };
-  q.insert_before(alloc.address(1), find2);
+  auto find2 = [](SQ* q) { return q->v == 3; };
+  q.insert_before(address<SQ>(1u), find2);
   REQUIRE(q.size() == 4);
   std::vector<int32_t> v4;
   q.iterate(collect, std::ref(v4));
-  REQUIRE(equal(v4, {0, 1, 2, 3}));
+  REQUIRE(equal(v4, {0, 2, 1, 3}));
   p = q.find_r(find1);
-  REQUIRE(p == alloc.address(1));
+  REQUIRE(p == address<SQ>(1u));
 
   auto find10 = [](SQ* q) { return q->v == 10; };
-  p = q.insert_after(alloc.address(9), find10);
+  p = q.insert_after(address<SQ>(4u), find10);
   REQUIRE(p == nullptr);
   std::vector<int32_t> v5;
   q.iterate(collect, std::ref(v5));
-  REQUIRE(equal(v5, {0, 1, 2, 3}));
+  REQUIRE(equal(v5, {0, 2, 1, 3}));
 
   std::vector<int32_t> v6;
   while (!q.empty()) {
@@ -278,6 +277,5 @@ TEST_CASE("intrusive slot queue", "[]") {
     q.dequeue(x);
   }
   REQUIRE(q.size() == 0);
-  REQUIRE(equal(v6, {0, 1, 2, 3}));
-  */
+  REQUIRE(equal(v6, {0, 2, 1, 3}));
 }
