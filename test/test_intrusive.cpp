@@ -43,6 +43,12 @@ TEST_CASE("intrusive queue", "[]") {
     return true;
   };
 
+  std::vector<int32_t> v0;
+  for (auto it = q1.begin(); it != q1.end(); it++) {
+    v0.push_back(GETQ(*it)->v);
+  }
+  REQUIRE(equal(v0, {0, 1, 2, 3}));
+
   std::vector<int32_t> v1;
   q1.iterate(collect, std::ref(v1));
   REQUIRE(equal(v1, {0, 1, 2, 3}));

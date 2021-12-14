@@ -5,6 +5,32 @@
   for ((q) = QUEUE_PREV(h); (q) != (h); (q) = QUEUE_PREV(q))
 
 struct intrusive_queue {
+  struct iterator {
+    QUEUE* next;
+
+    bool operator==(const iterator& i) const noexcept {
+      return next == i.next;
+    }
+    bool operator!=(const iterator& i) const noexcept {
+      return next != i.next;
+    }
+
+    QUEUE* operator*() noexcept {
+      return next;
+    }
+
+    iterator& operator++() noexcept {
+      next = QUEUE_NEXT(next);
+      return *this;
+    }
+
+    iterator operator++(int) noexcept {
+      iterator t = *this;
+      ++(*this);
+      return t;
+    }
+  };
+
   QUEUE head;
   intrusive_queue() {
     QUEUE_INIT(&head);
@@ -12,6 +38,14 @@ struct intrusive_queue {
 
   bool empty() const noexcept {
     return QUEUE_EMPTY(&head);
+  }
+
+  iterator begin() noexcept {
+    return {QUEUE_HEAD(&head)};
+  }
+
+  iterator end() noexcept {
+    return {&head};
   }
 
   QUEUE* front() const noexcept {
