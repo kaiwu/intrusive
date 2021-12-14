@@ -1,9 +1,10 @@
+#include <cstdio>
+#include <vector>
+
 #include "catch.hpp"
 #include "intrusive_bst.h"
 #include "intrusive_queue.h"
 #include "intrusive_slot_queue.h"
-#include <cstdio>
-#include <vector>
 
 bool equal(const std::vector<int32_t>& v1, std::vector<int32_t>&& v2) {
   size_t i = 0;
@@ -19,9 +20,7 @@ bool equal(const std::vector<int32_t>& v1, std::vector<int32_t>&& v2) {
 struct Q {
   int32_t v;
   QUEUE link;
-  Q(int32_t i) : v(i) {
-    QUEUE_INIT(&link);
-  }
+  Q(int32_t i) : v(i) { QUEUE_INIT(&link); }
 };
 
 #define GETQ(x) QUEUE_DATA(x, Q, link)
@@ -90,10 +89,10 @@ TEST_CASE("intrusive queue", "[]") {
 
   Q qs2[] = {{4}, {5}, {6}, {7}};
   intrusive_queue q2;
-  for (auto& q : qs2) { // auto& intrusive !!!
+  for (auto& q : qs2) {  // auto& intrusive !!!
     q2.enqueue_back(&q.link);
   }
-  q1.append(q2); // q2 cannot be used
+  q1.append(q2);  // q2 cannot be used
   REQUIRE(q1.size() == 8);
 
   intrusive_queue q3;
@@ -128,16 +127,12 @@ TEST_CASE("intrusive queue", "[]") {
 struct T {
   int32_t v;
   TREE node;
-  T(int32_t i) : v(i) {
-    TREE_INIT(&node);
-  }
+  T(int32_t i) : v(i) { TREE_INIT(&node); }
 };
 
 #define GETT(x) TREE_DATA(x, T, node)
 
-bool compareT(TREE* t1, TREE* t2) {
-  return GETT(t1)->v < GETT(t2)->v;
-}
+bool compareT(TREE* t1, TREE* t2) { return GETT(t1)->v < GETT(t2)->v; }
 
 TEST_CASE("intrusive bst", "[]") {
   T ts[] = {{4}, {2}, {1}, {3}, {0}, {5}};
@@ -203,18 +198,16 @@ TEST_CASE("intrusive bst", "[]") {
 struct SQ {
   uint32_t v;
   SLOT_QUEUE q;
-  
-  SQ(uint32_t i): v(i) {
-    SLOT_QUEUE_INIT(&q, i);
-  }
+
+  SQ(uint32_t i) : v(i) { SLOT_QUEUE_INIT(&q, i); }
 };
 
-template<>
+template <>
 SLOT_QUEUE* address<SQ>(SQ* sq) {
   return sq == nullptr ? nullptr : &(sq->q);
 }
 
-template<>
+template <>
 SQ* address<SQ>(uint32_t slot) {
   static std::vector<SQ> q{{0}, {1}, {2}, {3}, {4}};
   if (slot < q.size()) {
@@ -222,7 +215,6 @@ SQ* address<SQ>(uint32_t slot) {
   }
   return nullptr;
 }
-
 
 TEST_CASE("intrusive slot queue", "[]") {
   intrusive_slot_queue<SQ> q;

@@ -1,23 +1,16 @@
 #pragma once
 #include "queue.h"
 
-#define QUEUE_FOREACH_R(q, h)                                                  \
+#define QUEUE_FOREACH_R(q, h) \
   for ((q) = QUEUE_PREV(h); (q) != (h); (q) = QUEUE_PREV(q))
 
 struct intrusive_queue {
   struct iterator {
     QUEUE* next;
 
-    bool operator==(const iterator& i) const noexcept {
-      return next == i.next;
-    }
-    bool operator!=(const iterator& i) const noexcept {
-      return next != i.next;
-    }
-
-    QUEUE* operator*() noexcept {
-      return next;
-    }
+    bool operator==(const iterator& i) const noexcept { return next == i.next; }
+    bool operator!=(const iterator& i) const noexcept { return next != i.next; }
+    QUEUE* operator*() noexcept { return next; }
 
     iterator& operator++() noexcept {
       next = QUEUE_NEXT(next);
@@ -32,44 +25,21 @@ struct intrusive_queue {
   };
 
   QUEUE head;
-  intrusive_queue() {
-    QUEUE_INIT(&head);
-  }
+  intrusive_queue() { QUEUE_INIT(&head); }
 
-  bool empty() const noexcept {
-    return QUEUE_EMPTY(&head);
-  }
-
-  iterator begin() noexcept {
-    return {QUEUE_HEAD(&head)};
-  }
-
-  iterator end() noexcept {
-    return {&head};
-  }
-
-  QUEUE* front() const noexcept {
-    return QUEUE_HEAD(&head);
-  }
-
-  void enqueue_back(QUEUE* p) {
-    QUEUE_INSERT_TAIL(&head, p);
-  }
-
-  void enqueue_front(QUEUE* p) {
-    QUEUE_INSERT_HEAD(&head, p);
-  }
-
-  void dequeue(QUEUE* p) {
-    QUEUE_REMOVE(p);
-  }
+  bool empty() const noexcept { return QUEUE_EMPTY(&head); }
+  iterator begin() noexcept { return {QUEUE_HEAD(&head)}; }
+  iterator end() noexcept { return {&head}; }
+  QUEUE* front() const noexcept { return QUEUE_HEAD(&head); }
+  void enqueue_back(QUEUE* p) { QUEUE_INSERT_TAIL(&head, p); }
+  void enqueue_front(QUEUE* p) { QUEUE_INSERT_HEAD(&head, p); }
+  void dequeue(QUEUE* p) { QUEUE_REMOVE(p); }
 
   template <typename F, typename... Args>
   void iterate(F&& f, Args&&... args) {
     QUEUE* p = nullptr;
     QUEUE_FOREACH(p, &head) {
-      if (!f(p, args...))
-        break;
+      if (!f(p, args...)) break;
     }
   }
 
@@ -77,8 +47,7 @@ struct intrusive_queue {
   void iterate_r(F&& f, Args&&... args) {
     QUEUE* p = nullptr;
     QUEUE_FOREACH_R(p, &head) {
-      if (!f(p, args...))
-        break;
+      if (!f(p, args...)) break;
     }
   }
 
@@ -134,9 +103,7 @@ struct intrusive_queue {
     return x;
   }
 
-  void append(intrusive_queue& q) {
-    QUEUE_ADD(&head, &q.head);
-  }
+  void append(intrusive_queue& q) { QUEUE_ADD(&head, &q.head); }
 
   template <typename F>
   void split(F&& f, intrusive_queue& q) {

@@ -1,18 +1,19 @@
 #pragma once
-#include <deque>
 #include <stddef.h>
+
+#include <deque>
 
 typedef void *TREE[2];
 #define TREE_LEFT(t) (*(TREE **)&((*(t))[0]))
 #define TREE_RIGHT(t) (*(TREE **)&((*(t))[1]))
 
-#define TREE_INIT(t)                                                           \
-  do {                                                                         \
-    TREE_LEFT(t) = (t);                                                        \
-    TREE_RIGHT(t) = (t);                                                       \
+#define TREE_INIT(t)     \
+  do {                   \
+    TREE_LEFT(t) = (t);  \
+    TREE_RIGHT(t) = (t); \
   } while (0)
 
-#define TREE_DATA(ptr, type, field)                                            \
+#define TREE_DATA(ptr, type, field) \
   ((type *)((char *)(ptr)-offsetof(type, field)))
 
 #define LEFT_EMPTY(t) ((const TREE *)(t) == (const TREE *)TREE_LEFT(t))
@@ -145,10 +146,8 @@ struct intrusive_bst {
       TREE *t = ts.front();
       ts.pop_front();
       f(t, std::forward<Args>(args)...);
-      if (!LEFT_EMPTY(t))
-        ts.push_back(TREE_LEFT(t));
-      if (!RIGHT_EMPTY(t))
-        ts.push_back(TREE_RIGHT(t));
+      if (!LEFT_EMPTY(t)) ts.push_back(TREE_LEFT(t));
+      if (!RIGHT_EMPTY(t)) ts.push_back(TREE_RIGHT(t));
     }
   }
 
@@ -156,18 +155,18 @@ struct intrusive_bst {
   void iterate(tree_traverse_t traverse, F &&f, Args &&...args) const noexcept {
     if (!empty()) {
       switch (traverse) {
-      case TREE_TRAVERSE_PREORDER:
-        iterate_preorder(f, root, std::forward<Args>(args)...);
-        break;
-      case TREE_TRAVERSE_INORDER:
-        iterate_inorder(f, root, std::forward<Args>(args)...);
-        break;
-      case TREE_TRAVERSE_POSTORDER:
-        iterate_postorder(f, root, std::forward<Args>(args)...);
-        break;
-      case TREE_TRAVERSE_BFS:
-        iterate_bfs(f, root, std::forward<Args>(args)...);
-        break;
+        case TREE_TRAVERSE_PREORDER:
+          iterate_preorder(f, root, std::forward<Args>(args)...);
+          break;
+        case TREE_TRAVERSE_INORDER:
+          iterate_inorder(f, root, std::forward<Args>(args)...);
+          break;
+        case TREE_TRAVERSE_POSTORDER:
+          iterate_postorder(f, root, std::forward<Args>(args)...);
+          break;
+        case TREE_TRAVERSE_BFS:
+          iterate_bfs(f, root, std::forward<Args>(args)...);
+          break;
       }
     }
   }
