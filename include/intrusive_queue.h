@@ -1,8 +1,7 @@
 #pragma once
 #include "queue.h"
 
-#define QUEUE_FOREACH_R(q, h) \
-  for ((q) = QUEUE_PREV(h); (q) != (h); (q) = QUEUE_PREV(q))
+#define QUEUE_FOREACH_R(q, h) for ((q) = QUEUE_PREV(h); (q) != (h); (q) = QUEUE_PREV(q))
 
 struct intrusive_queue {
   struct iterator {
@@ -35,19 +34,19 @@ struct intrusive_queue {
   void enqueue_front(QUEUE* p) { QUEUE_INSERT_HEAD(&head, p); }
   void dequeue(QUEUE* p) { QUEUE_REMOVE(p); }
 
-  template <typename F, typename... Args>
-  void iterate(F&& f, Args&&... args) {
+  template <typename F, typename... Args> void iterate(F&& f, Args&&... args) {
     QUEUE* p = nullptr;
     QUEUE_FOREACH(p, &head) {
-      if (!f(p, args...)) break;
+      if (!f(p, args...))
+        break;
     }
   }
 
-  template <typename F, typename... Args>
-  void iterate_r(F&& f, Args&&... args) {
+  template <typename F, typename... Args> void iterate_r(F&& f, Args&&... args) {
     QUEUE* p = nullptr;
     QUEUE_FOREACH_R(p, &head) {
-      if (!f(p, args...)) break;
+      if (!f(p, args...))
+        break;
     }
   }
 
@@ -61,8 +60,7 @@ struct intrusive_queue {
     return count;
   }
 
-  template <typename F>
-  QUEUE* find(F&& f) {
+  template <typename F> QUEUE* find(F&& f) {
     QUEUE* p = nullptr;
     iterate([&p, f](QUEUE* x) -> bool {
       if (f(x)) {
@@ -73,8 +71,7 @@ struct intrusive_queue {
     return p;
   }
 
-  template <typename F>
-  QUEUE* find_r(F&& f) {
+  template <typename F> QUEUE* find_r(F&& f) {
     QUEUE* p = nullptr;
     iterate_r([&p, f](QUEUE* x) -> bool {
       if (f(x)) {
@@ -85,8 +82,7 @@ struct intrusive_queue {
     return p;
   }
 
-  template <typename F>
-  QUEUE* insert_before(QUEUE* p, F&& f) {
+  template <typename F> QUEUE* insert_before(QUEUE* p, F&& f) {
     QUEUE* x = find(f);
     if (x != nullptr) {
       QUEUE_INSERT_TAIL(x, p);
@@ -94,8 +90,7 @@ struct intrusive_queue {
     return x;
   }
 
-  template <typename F>
-  QUEUE* insert_after(QUEUE* p, F&& f) {
+  template <typename F> QUEUE* insert_after(QUEUE* p, F&& f) {
     QUEUE* x = find(f);
     if (x != nullptr) {
       QUEUE_INSERT_HEAD(x, p);
@@ -105,8 +100,7 @@ struct intrusive_queue {
 
   void append(intrusive_queue& q) { QUEUE_ADD(&head, &q.head); }
 
-  template <typename F>
-  void split(F&& f, intrusive_queue& q) {
+  template <typename F> void split(F&& f, intrusive_queue& q) {
     QUEUE* x = find(f);
     if (x != nullptr) {
       QUEUE_SPLIT(&head, x, &q.head);

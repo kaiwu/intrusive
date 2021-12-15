@@ -89,10 +89,10 @@ TEST_CASE("intrusive queue", "[]") {
 
   Q qs2[] = {{4}, {5}, {6}, {7}};
   intrusive_queue q2;
-  for (auto& q : qs2) {  // auto& intrusive !!!
+  for (auto& q : qs2) { // auto& intrusive !!!
     q2.enqueue_back(&q.link);
   }
-  q1.append(q2);  // q2 cannot be used
+  q1.append(q2); // q2 cannot be used
   REQUIRE(q1.size() == 8);
 
   intrusive_queue q3;
@@ -202,13 +202,9 @@ struct SQ {
   SQ(uint32_t i) : v(i) { SLOT_QUEUE_INIT(&q, i); }
 };
 
-template <>
-SLOT_QUEUE* address<SQ>(SQ* sq) {
-  return sq == nullptr ? nullptr : &(sq->q);
-}
+template <> SLOT_QUEUE* address<SQ>(SQ* sq) { return sq == nullptr ? nullptr : &(sq->q); }
 
-template <>
-SQ* address<SQ>(uint32_t slot) {
+template <> SQ* address<SQ>(uint32_t slot) {
   static std::vector<SQ> q{{0}, {1}, {2}, {3}, {4}};
   if (slot < q.size()) {
     return &q[slot];
